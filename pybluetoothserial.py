@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-	  pybluetoothserial.py : Connect to bluetooth serial devices.
+	  pybluetoothserial.py (PBS) : Connect to bluetooth serial devices.
 	
 	           DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
                    Version 2, December 2004
@@ -71,6 +71,10 @@ class MainWindow:
 		gobject.timeout_add(100, self.recieveSerial)
 		gobject.timeout_add(500, self.refreshInterface)
 		gobject.threads_init()
+		
+		self.textBuffer.set_text(">> Welcome in pybluetoothserial.py (PBS)\n")
+		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">>        v0.1 by Thomas Maurice\n")
+		
 		
 		self.searchThread = threading.Thread(target=self.searchDevices)
 		self.searchThread.start()
@@ -234,7 +238,7 @@ class MainWindow:
 		while self.devicesList.get_active() != -1:
 			self.devicesList.remove_text(0)
 			
-		self.textBuffer.set_text(">> Searching Bluetooth serial ports... ")
+		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">> Searching Bluetooth serial ports... ")
 		self.searchSpinner.start()
 		self.searchSpinner.show()
 		
