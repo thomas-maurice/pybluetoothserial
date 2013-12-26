@@ -47,14 +47,21 @@ class MainWindow:
 		"""
 		self.init_window()
 		self.init_layouts()
+		self.init_mode()
 		self.init_textview()
 		self.init_sendBar()
 		self.init_searchBar()
+		
+		# some constants
+		self.HEXMODE = 0
+		self.ASCIIMODE = 1
 		
 		self.searchThread = None
 		self.socket = None
 		self.services = None
 		self.connected = False
+		self.hexcount = 0
+		self.mode = self.ASCIIMODE
 		
 		# Main window signals
 		self.window.connect("destroy", self.exitProgram)
@@ -62,6 +69,7 @@ class MainWindow:
 		# Show all
 		self.mainLayout.pack_start(self.scrolledWindow, gtk.FILL)
 		self.mainLayout.pack_start(self.sendBarLayout, gtk.SHRINK)
+		self.mainLayout.pack_start(self.modeLayout, gtk.SHRINK)
 		self.mainLayout.pack_start(self.searchLayout, gtk.SHRINK)
 		self.window.add(self.mainLayout)
 		self.window.show_all()
@@ -97,6 +105,12 @@ class MainWindow:
 		else:
 			self.searchButton.set_sensitive(True)
 	
+	def modeChanged(self, data=None):
+		if self.hexButton.get_active() == True:
+			self.mode = self.HEXMODE
+		else:
+			self.mode = self.ASCIIMODE
+	
 	def clearBuffer(self, data=None):
 		self.textBuffer.set_text("")
 		
@@ -119,9 +133,20 @@ class MainWindow:
 		"""
 			Layouts !
 		"""
+		self.modeLayout = gtk.HBox()
 		self.searchLayout = gtk.HBox()
 		self.mainLayout = gtk.VBox()
 		self.sendBarLayout = gtk.HBox()
+	
+	def init_mode(self):
+		self.hexButton = gtk.RadioButton(label="Hex display")
+		self.hexButton.set_active(False)
+		self.asciiButton = gtk.RadioButton(label="ASCII display", group=self.hexButton)
+		self.asciiButton.set_active(True)
+		self.modeLayout.pack_start(self.hexButton, gtk.SHRINK)
+		self.modeLayout.pack_start(self.asciiButton, gtk.SHRINK)
+		self.hexButton.connect("clicked", self.modeChanged)
+		self.asciiButton.connect("clicked", self.modeChanged)
 	
 	def init_window(self):
 		"""
@@ -169,7 +194,20 @@ class MainWindow:
 		if self.connected:
 			r, _, _ = select.select([self.socket], [], [], 0)
 			if r != []:
-				self.textBuffer.insert(self.textBuffer.get_end_iter(), self.socket.recv(1024))
+				s = self.socket.recv(1024)
+				if self.mode == self.HEXMODE:
+					for c in s:
+						h = '['+hex(ord(c))
+						if len(h) < 5:
+							h += " "
+						h += "]"
+						self.textBuffer.insert(self.textBuffer.get_end_iter(), h)
+						self.hexcount+=1
+						if self.hexcount >= 7:
+							self.textBuffer.insert(self.textBuffer.get_end_iter(), "\n")
+							self.hexcount = 0
+				else:
+					self.textBuffer.insert(self.textBuffer.get_end_iter(), s)
 		return True
 	
 	def serialSend(self, data=None):
