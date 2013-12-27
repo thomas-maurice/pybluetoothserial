@@ -39,6 +39,7 @@ import bluetooth as bluez
 import sys
 import select
 import threading
+import string
 
 class MainWindow:
 	def __init__(self):
@@ -55,19 +56,20 @@ class MainWindow:
 		# some constants
 		self.HEXMODE = 0
 		self.ASCIIMODE = 1
+		self.BOTHMODE = 2
 		
 		self.searchThread = None
 		self.socket = None
 		self.services = None
 		self.connected = False
 		self.hexcount = 0
-		self.mode = self.ASCIIMODE
+		self.mode = self.BOTHMODE
 		
 		# Main window signals
 		self.window.connect("destroy", self.exitProgram)
 		
 		# Show all
-		self.mainLayout.pack_start(self.scrolledWindow, gtk.FILL)
+		self.mainLayout.pack_start(self.scrolledWindow, gtk.FILL|gtk.EXPAND)
 		self.mainLayout.pack_start(self.sendBarLayout, gtk.SHRINK)
 		self.mainLayout.pack_start(self.modeLayout, gtk.SHRINK)
 		self.mainLayout.pack_start(self.searchLayout, gtk.SHRINK)
@@ -80,8 +82,8 @@ class MainWindow:
 		gobject.timeout_add(500, self.refreshInterface)
 		gobject.threads_init()
 		
-		self.textBuffer.set_text(">> Welcome in pybluetoothserial.py (PBS)\n")
-		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">>        v0.1 by Thomas Maurice\n")
+		self.textBuffer.set_text(">>           Welcome in pybluetoothserial.py (PBS)\n")
+		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">>                  v0.1 by Thomas Maurice\n\n")
 		
 		
 		self.searchThread = threading.Thread(target=self.searchDevices)
@@ -108,8 +110,10 @@ class MainWindow:
 	def modeChanged(self, data=None):
 		if self.hexButton.get_active() == True:
 			self.mode = self.HEXMODE
-		else:
+		elif self.asciiButton.get_active() == True:
 			self.mode = self.ASCIIMODE
+		else:
+			self.mode = self.BOTHMODE
 	
 	def clearBuffer(self, data=None):
 		self.textBuffer.set_text("")
@@ -144,10 +148,14 @@ class MainWindow:
 		self.hexButton.set_active(False)
 		self.asciiButton = gtk.RadioButton(label="ASCII display", group=self.hexButton)
 		self.asciiButton.set_active(True)
+		self.bothButton = gtk.RadioButton(label="Both (ASCII+Hex)", group=self.hexButton)
+		self.bothButton.set_active(True)
 		self.modeLayout.pack_start(self.hexButton, gtk.SHRINK)
 		self.modeLayout.pack_start(self.asciiButton, gtk.SHRINK)
+		self.modeLayout.pack_start(self.bothButton, gtk.SHRINK)
 		self.hexButton.connect("clicked", self.modeChanged)
 		self.asciiButton.connect("clicked", self.modeChanged)
+		self.bothButton.connect("clicked", self.modeChanged)
 	
 	def init_window(self):
 		"""
@@ -155,7 +163,7 @@ class MainWindow:
 		"""
 		self.window = gtk.Window()
 		self.window.set_position(gtk.WIN_POS_CENTER)
-		self.window.set_default_size(400, 100)
+		self.window.set_default_size(480, 100)
 	
 	def init_sendBar(self):
 		"""
@@ -196,11 +204,17 @@ class MainWindow:
 			r, _, _ = select.select([self.socket], [], [], 0)
 			if r != []:
 				s = self.socket.recv(1024)
-				if self.mode == self.HEXMODE:
+				if self.mode == self.HEXMODE or self.mode == self.BOTHMODE:
 					for c in s:
 						h = '['+hex(ord(c))
 						if len(h) < 5:
 							h += " "
+						if self.mode == self.BOTHMODE:
+							h += " "
+							if self.isCharPrintable(c) == True:
+								h += c
+							else:
+								h += "."
 						h += "]"
 						self.textBuffer.insert(self.textBuffer.get_end_iter(), h)
 						self.hexcount+=1
@@ -210,6 +224,12 @@ class MainWindow:
 				else:
 					self.textBuffer.insert(self.textBuffer.get_end_iter(), s)
 		return True
+	
+	def isCharPrintable(self, c):
+		if  (c in string.letters) or (c in string.digits) or (c in (string.punctuation+" ")):
+			return True
+		else:
+			return False
 	
 	def serialSend(self, data=None):
 		"""
@@ -251,7 +271,7 @@ class MainWindow:
 					self.hexcount = 0
 					self.textBuffer.insert(self.textBuffer.get_end_iter(), "[ OK ]\n")
 				except Exception as e:
-					print "Error, unable to connect ! ", e.message
+					print "Error, unable to connect ! ", e.message[1]
 					self.connected = False
 					self.connectButton.set_label("Connect")
 					self.textBuffer.insert(self.textBuffer.get_end_iter(), "[FAIL]\n")
@@ -284,7 +304,7 @@ class MainWindow:
 		try:
 			self.services = bluez.find_service(uuid=bluez.SERIAL_PORT_CLASS)
 		except Exception as e:
-			print "Error, unable to search devices :", e.message
+			print "Error, unable to search devices :", e.message[1]
 			return
 
 		self.textBuffer.insert(self.textBuffer.get_end_iter(), "found " + str(len(self.services)) + "\n")
