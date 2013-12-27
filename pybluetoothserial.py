@@ -113,6 +113,7 @@ class MainWindow:
 	
 	def clearBuffer(self, data=None):
 		self.textBuffer.set_text("")
+		self.hexcount = 0
 		
 	def init_textview(self):
 		"""
@@ -247,9 +248,10 @@ class MainWindow:
 					self.socket.connect((s["host"], s["port"]))
 					self.connectButton.set_label("Disconnect")
 					self.connected = True
+					self.hexcount = 0
 					self.textBuffer.insert(self.textBuffer.get_end_iter(), "[ OK ]\n")
-				except:
-					print "Error, unable to connect !"
+				except Exception as e:
+					print "Error, unable to connect ! ", e.message
 					self.connected = False
 					self.connectButton.set_label("Connect")
 					self.textBuffer.insert(self.textBuffer.get_end_iter(), "[FAIL]\n")
@@ -279,8 +281,12 @@ class MainWindow:
 		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">> Searching Bluetooth serial ports... ")
 		self.searchSpinner.start()
 		self.searchSpinner.show()
-		
-		self.services = bluez.find_service(uuid=bluez.SERIAL_PORT_CLASS)
+		try:
+			self.services = bluez.find_service(uuid=bluez.SERIAL_PORT_CLASS)
+		except Exception as e:
+			print "Error, unable to search devices :", e.message
+			return
+
 		self.textBuffer.insert(self.textBuffer.get_end_iter(), "found " + str(len(self.services)) + "\n")
 		for i in range (len(self.services)):
 			print " -> Found", self.services[i]["name"], "at", self.services[i]["host"]
