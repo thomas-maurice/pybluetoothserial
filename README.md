@@ -60,10 +60,10 @@ the console :
 
 To be more clear, here is a small recap :
 
-Character 'a'. ASCII : *a*, Hex : *[0x61]*, Both *[0x61 a]*
+Character 'a'. ASCII : **a**, Hex : **[0x61]**, Both **[0x61 a]**
 
 Another exemple with a non printable one :
 
-Character '\n'. ASCII : *\n*, Hex : *[0xa ]*, Both *[0xa  .]*
+Character '\n'. ASCII : **\n**, Hex : **[0xa ]**, Both **[0xa  .]**
 
 Enjoy :)
