@@ -23,7 +23,7 @@
 __author__ = "Thomas Maurice"
 __copyright__ = "Copyright 2013, Thomas Maurice"
 __license__ = "WTFPL"
-__version__ = "0.1"
+__version__ = "0.2"
 __maintainer__ = "Thomas Maurice"
 __email__ = "tmaurice59@gmail.com"
 __status__ = "Development"
@@ -83,7 +83,7 @@ class MainWindow:
 		gobject.threads_init()
 		
 		self.textBuffer.set_text(">>           Welcome in pybluetoothserial.py (PBS)\n")
-		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">>                  v0.1 by Thomas Maurice\n\n")
+		self.textBuffer.insert(self.textBuffer.get_end_iter(), ">>                  v0.2 by Thomas Maurice\n\n")
 		
 		
 		self.searchThread = threading.Thread(target=self.searchDevices)
